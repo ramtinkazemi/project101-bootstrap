@@ -1,0 +1,6 @@
+# General system files
+.DS_Store
+
+.vagrant
+.archive
+
