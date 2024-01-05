@@ -13,7 +13,6 @@ check-aws:
 		echo "Failed to retrieve AWS identity."; \
 		exit 1; \
 	else \
-		echo "AWS Account ID: $$AWS_IDENTITY"; \
 		echo "AWS User: $$AWS_USER"; \
 	fi
 
