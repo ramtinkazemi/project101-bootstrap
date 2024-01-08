@@ -4,7 +4,7 @@
 bin_path=$(realpath $(dirname $0))
 root_path=$(realpath $bin_path/..)
 
-. .env
+. .env.local
 
 # Check if AWS CLI is installed
 if ! [ -x "$(command -v aws)" ]; then
