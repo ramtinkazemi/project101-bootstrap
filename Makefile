@@ -24,5 +24,6 @@ bootstrap: check-aws
 		[Yy]* ) ;; \
 		* ) echo "Exiting..."; exit 1;; \
 	esac
-	@./bin/bootstrap.sh $(TG_CONFIG_PATH)
+	@./bin/render.sh bootstrap.yaml bootstrap.vars > bootstrap-rendered.yaml
+	@./bin/bootstrap.sh
 

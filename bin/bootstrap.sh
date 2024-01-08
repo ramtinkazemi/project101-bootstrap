@@ -15,7 +15,7 @@ fi
 # Function to deploy or update CloudFormation stack
 deploy_stack() {
     aws cloudformation deploy \
-        --template-file bootstrap.yaml \
+        --template-file $TEMPLATE_FILE \
         --stack-name $STACK_NAME \
         --region $AWS_REGION \
         --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \

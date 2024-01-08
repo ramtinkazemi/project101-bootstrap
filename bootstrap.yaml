@@ -4,38 +4,18 @@ Description: Bootstrap template for bootstrap AWS Account
 Parameters:
   GitHubBlueprintsRepo:
     Type: String
-    Default: ramtinkazemi/project1-blueprints
+    Default: '{{GITHUB_BLUEPRINTS_REPO}}'
     Description: GitHub repository for OIDC integration with blueprint repo
 
   GitHubInfraRepo:
     Type: String
-    Default: ramtinkazemi/project1-infra
+    Default: '{{GITHUB_INFRA_REPO}}'
     Description: GitHub repository for OIDC integration with infrastructure repo
 
   GitHubAppRepo:
     Type: String
-    Default: ramtinkazemi/project1-app
+    Default: '{{GITHUB_APP_REPO}}'
     Description: GitHub repository for OIDC integration with application repo
-
-  SSOInstanceId:
-    Type: String
-    Default: ssoins-825992af60b88909
-    Description: AWS SSO Instance ID
-
-  AdminUserEmailAddress:
-    Type: String
-    Default: ramtin.kazemi@gmail.com
-    Description: Email address for SSO Admin user
-
-  AdminUserFirstName:
-    Type: String
-    Default: Ramtin
-    Description: First name of the SSO Admin user
-
-  AdminUserLastName:
-    Type: String
-    Default: Kazemi
-    Description: Last name of the SSO Admin user
 
 Resources:
 
