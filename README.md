@@ -57,14 +57,13 @@ This can be done either via the provided Github Workflow or manullay as follows:
    ```bash
    make aws-check
    ```
-2. Visit **.env.local** and make necessary adjustments.
-3. Visit **.bootstrap-app.var** and make necessary adjustments.
-4. (Optional) Spin up and ssh into the vagrant box:
+2. Add the app to **config/apps**.
+3. (Optional) Spin up and ssh into the vagrant box:
    ```bash
     vagrant up
     vagrant ssh
    ```
-5. Execute the script:
+4. Execute the script:
    ```bash
    make bootstrap-app
    ```
@@ -76,14 +75,13 @@ This can be done either via the provided Github Workflow or manullay as follows:
    ```bash
    make aws-check
    ```
-2. Visit **.env.local** and make necessary adjustments.
-3. Visit **.bootstrap-com.var** and make necessary adjustments.
-4. (Optional) Spin up and ssh into the vagrant box:
+2. Add the component to **config/components**.
+3. (Optional) Spin up and ssh into the vagrant box:
    ```bash
     vagrant up
     vagrant ssh
    ```
-5. Execute the script:
+4. Execute the script:
    ```bash
    make bootstrap-com
    ```

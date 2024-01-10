@@ -6,7 +6,7 @@ Resources:
   TerraformStateLockTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "{{stack}}-{{app}}-{{env}}-terraform-lock-${AWS::AccountId}-${AWS::Region}"
+      TableName: !Sub "{{app}}-terraform-lock-${AWS::AccountId}-${AWS::Region}"
       AttributeDefinitions:
         - AttributeName: LockID
           AttributeType: S
@@ -22,7 +22,7 @@ Resources:
   AppOIDCRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "{{stack}}-{{app}}-{{env}}-gha-oidc-role-${AWS::Region}"
+      RoleName: !Sub "{{app}}-gha-oidc-role-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -34,8 +34,8 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
                 token.actions.githubusercontent.com:sub: [
-                  !Sub "repo:{{github_app_repo}}:ref:refs/heads/main",
-                  !Sub "repo:{{github_app_repo}}:pull_request",
+                  !Sub "repo:{{repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{repo}}:pull_request",
                 ]
       Policies:
         - PolicyName: EKSFullAccessPolicy
@@ -61,14 +61,14 @@ Resources:
   AppOIDCRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/{{stack}}-{{app}}-{{env}}/gha-oidc-app-role-arn'
+      Name: '/facts/v1/{{app}}/gha-oidc-app-role-arn'
       Type: String
       Value: !GetAtt AppOIDCRole.Arn
 
   TerraformStateLockTableNameParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/{{stack}}-{{app}}-{{env}}/terraform-state-lock-table-name'
+      Name: '/facts/v1/{{app}}/terraform-state-lock-table-name'
       Type: String
       Value: !Ref TerraformStateLockTable
 

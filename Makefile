@@ -19,53 +19,26 @@ bootstrap-acc: check-aws
 	@echo GITHUB_BOOTSTRAP_REPO=$(GITHUB_BOOTSTRAP_REPO)
 	@echo GITHUB_BLUEPRINTS_REPO=$(GITHUB_BLUEPRINTS_REPO)
 	@echo GITHUB_INFRA_REPO=$(GITHUB_INFRA_REPO)
-	@if [ "$(GITHUB_ACTIONS)" = "true" ]; then \
-		echo "Running in Github Actions, skipping confirmation."; \
-	else \
-		echo "\033[1;31mProceed? [y|N] \033[0m" | tr -d '\n'; \
-		read PROCEED; \
-		case "$$PROCEED" in \
-			[Yy]* ) ;; \
-			* ) echo "Exiting..."; exit 1 ;; \
-		esac \
-	fi
 	@./bin/render.sh bootstrap-acc.yaml bootstrap-acc.vars > bootstrap-acc-rendered.yaml
 	@CFN_STACK_NAME=bootstrap-account ./bin/deploy-cfn-stack.sh bootstrap-acc-rendered.yaml
 
 bootstrap-app: check-aws
-	@echo "Bootstrapping app for Terraform and Github OIDC..."
-	@echo STACK=$(STACK)
-	@echo APP=$(APP)
-	@echo ENV=$(ENV)
-	@echo GITHUB_APP_REPO=$(GITHUB_APP_REPO)
-	@if [ "$(GITHUB_ACTIONS)" = "true" ]; then \
-		echo "Running in Github Actions, skipping confirmation."; \
-	else \
-		echo "\033[1;31mProceed? [y|N] \033[0m" | tr -d '\n'; \
-		read PROCEED; \
-		case "$$PROCEED" in \
-			[Yy]* ) ;; \
-			* ) echo "Exiting..."; exit 1 ;; \
-		esac \
-	fi
-	@./bin/render.sh bootstrap-app.yaml bootstrap-app.vars > bootstrap-app-rendered.yaml
-	@CFN_STACK_NAME=bootstrap-$(STACK)-$(APP)-${ENV} ./bin/deploy-cfn-stack.sh bootstrap-app-rendered.yaml
-
+	@while read -r line; do \
+		APP=$${line%@*}; \
+		REPO=$${line#*@}; \
+		echo "Bootstrapping app: $$APP@$$REPO"; \
+		{ echo "app=$$APP"; echo "repo=$$REPO"; } > temp.vars; \
+		./bin/render.sh bootstrap-app.yaml temp.vars > bootstrap-app-rendered.yaml; \
+		CFN_STACK_NAME=bootstrap-$$APP ./bin/deploy-cfn-stack.sh bootstrap-app-rendered.yaml; \
+	done < config/apps
 
 bootstrap-com: check-aws
-	@echo "Bootstrapping component for Terraform and Github OIDC..."
-	@echo STACK=$(STACK)
-	@echo COMPONENT=$(COMPONENT)
-	@echo ENV=$(ENV)
-	@if [ "$(GITHUB_ACTIONS)" = "true" ]; then \
-		echo "Running in Github Actions, skipping confirmation."; \
-	else \
-		echo "\033[1;31mProceed? [y|N] \033[0m" | tr -d '\n'; \
-		read PROCEED; \
-		case "$$PROCEED" in \
-			[Yy]* ) ;; \
-			* ) echo "Exiting..."; exit 1 ;; \
-		esac \
-	fi
-	@./bin/render.sh bootstrap-com.yaml bootstrap-com.vars > bootstrap-com-rendered.yaml
-	@CFN_STACK_NAME=bootstrap-$(STACK)-$(COMPONENT)-${ENV} ./bin/deploy-cfn-stack.sh bootstrap-com-rendered.yaml
+	@while read COMPONENT; do \
+		echo "Bootstrapping component: $$COMPONENT" ;\
+		echo component="$$COMPONENT" > temp.vars ;\
+		./bin/render.sh bootstrap-com.yaml temp.vars > bootstrap-com-rendered.yaml; \
+		CFN_STACK_NAME=bootstrap-$$COMPONENT ./bin/deploy-cfn-stack.sh bootstrap-com-rendered.yaml; \
+	done < config/components
+
+
+bootstrap-all: bootstrap-acc bootstrap-app bootstrap-com

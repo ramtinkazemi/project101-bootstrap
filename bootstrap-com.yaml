@@ -6,7 +6,7 @@ Resources:
   TerraformStateLockTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "{{stack}}-{{component}}-{{env}}-terraform-lock-${AWS::AccountId}-${AWS::Region}"
+      TableName: !Sub "{{component}}-terraform-lock-${AWS::AccountId}-${AWS::Region}"
       AttributeDefinitions:
         - AttributeName: LockID
           AttributeType: S
@@ -22,7 +22,7 @@ Resources:
   TerraformStateLockTableNameParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/{{stack}}-{{component}}-{{env}}/terraform-state-lock-table-name'
+      Name: '/facts/v1/{{component}}/terraform-state-lock-table-name'
       Type: String
       Value: !Ref TerraformStateLockTable
 
