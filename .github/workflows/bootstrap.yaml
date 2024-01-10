@@ -1,12 +1,10 @@
-name: 'Bootstrap Component'
+name: 'Bootstrap Application'
 
 env:
   AWS_REGION: 'ap-southeast-2'
   AWS_ACCOUNT_ID: '211125726495'
   AWS_OIDC_ROLE: 'arn:aws:iam::211125726495:role/gha-oidc-bootstrap-role-ap-southeast-2'
-
-  GITHUB_APP_REPO: '"ramtinkazemi/project101-app'
-
+  
 on:
   workflow_dispatch:
     inputs:
@@ -36,5 +34,11 @@ jobs:
           role-to-assume: ${{ env.AWS_OIDC_ROLE }}
           role-session-name: github-actions-bootstrap
 
-      - name: Bootstrap Application
+      - name: Bootstrap AWS Account
+        run: make bootstrap-acc
+
+      - name: Bootstrap Applications
+        run: make bootstrap-app
+
+      - name: Bootstrap Componenets
         run: make bootstrap-com
