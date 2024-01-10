@@ -12,39 +12,28 @@ Resources:
       ThumbprintList:
         - '1b511abead59c6ce207077c0bf0e0043b1382612'
 
-  TerraformStateBucket:
-    Type: AWS::S3::Bucket
+  BootstrapOIDCRole:
+    Type: AWS::IAM::Role
     Properties:
-      BucketName: !Sub "terraform-state-${AWS::AccountId}-${AWS::Region}"
-      VersioningConfiguration:
-        Status: Enabled
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        IgnorePublicAcls: true
-        BlockPublicPolicy: true
-        RestrictPublicBuckets: true
+      RoleName: !Sub gha-oidc-bootstrap-role-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: [
+                  !Sub "repo:{{github_bootstrap_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_bootstrap_repo}}:pull_request",
+                ]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
 
-  TerraformStateLockTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Sub "terraform-lock-${AWS::AccountId}-${AWS::Region}"
-      AttributeDefinitions:
-        - AttributeName: LockID
-          AttributeType: S
-      KeySchema:
-        - AttributeName: LockID
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      SSESpecification:
-        SSEEnabled: true
-
-  BlueprintsRole:
+  BlueprintsOIDCRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub gha-oidc-blueprints-role-${AWS::Region}
@@ -65,7 +54,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/ReadOnlyAccess
 
-  InfraRole:
+  InfraOIDCRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub gha-oidc-infra-role-${AWS::Region}
@@ -85,44 +74,6 @@ Resources:
                 ]
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
-
-  AppRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub gha-oidc-app-role-${AWS::Region}
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
-            Action: sts:AssumeRoleWithWebIdentity
-            Condition:
-              StringEquals:
-                token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: [
-                  !Sub "repo:{{github_app_repo}}:ref:refs/heads/main",
-                  !Sub "repo:{{github_app_repo}}:pull_request",
-                ]
-      Policies:
-        - PolicyName: EKSFullAccessPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: 
-                  - "eks:*"
-                  - "ec2:Describe*"
-                  - "ec2:ModifyInstanceAttribute"
-                  - "ec2:RebootInstances"
-                Resource: "*"
-        - PolicyName: S3AccessPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: "s3:*"
-                Resource: !Sub arn:aws:s3:::app-resources-${AWS::AccountId}-${AWS::Region}/*
 
   BootstrapLambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -176,58 +127,36 @@ Resources:
                   logger.error(e)
                   cfnresponse.send(event, context, cfnresponse.FAILED, {})
 
-  BlueprintsRoleArnParameter:
+  BootstrapOIDCRoleArnParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/gha-oidc-bootstrap-role-arn'
+      Type: String
+      Value: !GetAtt BootstrapOIDCRole.Arn
+
+  BlueprintsOIDCRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
       Name: '/facts/v1/gha-oidc-blueprints-role-arn'
       Type: String
-      Value: !GetAtt BlueprintsRole.Arn
+      Value: !GetAtt BlueprintsOIDCRole.Arn
 
-  InfraRoleArnParameter:
+  InfraOIDCRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
       Name: '/facts/v1/gha-oidc-infra-role-arn'
       Type: String
-      Value: !GetAtt InfraRole.Arn
-
-  AppRoleArnParameter:
-    Type: 'AWS::SSM::Parameter'
-    Properties:
-      Name: '/facts/v1/gha-oidc-app-role-arn'
-      Type: String
-      Value: !GetAtt AppRole.Arn
-
-  TerraformStateBucketNameParameter:
-    Type: 'AWS::SSM::Parameter'
-    Properties:
-      Name: '/facts/v1/terraform-state-bucket-name'
-      Type: String
-      Value: !Ref TerraformStateBucket
-
-  TerraformStateLockTableNameParameter:
-    Type: 'AWS::SSM::Parameter'
-    Properties:
-      Name: '/facts/v1/terraform-state-lock-table-name'
-      Type: String
-      Value: !Ref TerraformStateLockTable
+      Value: !GetAtt InfraOIDCRole.Arn
 
 Outputs:
-  BlueprintsRoleArn:
+  BootstrapOIDCRoleArn:
+    Description: "ARN of the Bootstrap Role for GitHub Actions"
+    Value: !GetAtt BootstrapOIDCRole.Arn
+
+  BlueprintsOIDCRoleArn:
     Description: "ARN of the Blueprints Role for GitHub Actions"
-    Value: !GetAtt BlueprintsRole.Arn
+    Value: !GetAtt BlueprintsOIDCRole.Arn
 
-  InfraRoleArn:
+  InfraOIDCRoleArn:
     Description: "ARN of the Infra Role for GitHub Actions"
-    Value: !GetAtt InfraRole.Arn
-
-  AppRoleArn:
-    Description: "ARN of the Application Role for GitHub Actions"
-    Value: !GetAtt AppRole.Arn
-
-  TerraformStateBucketName:
-    Description: "S3 Bucket for Terraform State"
-    Value: !Ref TerraformStateBucket
-
-  TerraformStateLockTableName:
-    Description: "DynamoDB Table for Terraform State Lock"
-    Value: !Ref TerraformStateLockTable
+    Value: !GetAtt InfraOIDCRole.Arn

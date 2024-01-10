@@ -48,9 +48,10 @@ while IFS='\n' read key_value; do
 
   ### skip lines starting with # or // used for comments
   [[ "$key_value" == \#* ]] || [[ "$key_value" == \/\/* ]] && continue
-
   key="$(trim_string ${key_value%=*})"
-  value="$(trim_string ${key_value#*=})"
+  value="$(eval echo ${key_value#*=})"
+  value="$(trim_string ${value})"
+
   ### remove PREFIX and SUFFIX from param, and get value of the resulted param name as an environment variable 
   # value="$(eval echo \$${param:${#PREFIX}:${#param}-${#PREFIX}-${#SUFFIX}})"
   if [[ (-n "$value") || (-z "$value" && $STRIP == "true" )]]; then

@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Bootstrap template for bootstrap App
+
+Resources:
+
+  TerraformStateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "{{stack}}-{{app}}-{{env}}-terraform-${AWS::AccountId}-${AWS::Region}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  TerraformStateLockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "{{stack}}-{{app}}-{{env}}-terraform-lock-${AWS::AccountId}-${AWS::Region}"
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
+
+  AppOIDCRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "{{stack}}-{{app}}-{{env}}-gha-oidc-app-role-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: [
+                  !Sub "repo:{{github_app_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_app_repo}}:pull_request",
+                ]
+      Policies:
+        - PolicyName: EKSFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - "eks:*"
+                  - "ec2:Describe*"
+                  - "ec2:ModifyInstanceAttribute"
+                  - "ec2:RebootInstances"
+                Resource: "*"
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: !Sub arn:aws:s3:::app-resources-${AWS::AccountId}-${AWS::Region}/*
+
+  AppOIDCRoleArnParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/{{stack}}-{{app}}-{{env}}/gha-oidc-app-role-arn'
+      Type: String
+      Value: !GetAtt AppOIDCRole.Arn
+
+  TerraformStateBucketNameParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/{{stack}}-{{app}}-{{env}}/terraform-state-bucket-name'
+      Type: String
+      Value: !Ref TerraformStateBucket
+
+  TerraformStateLockTableNameParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/{{stack}}-{{app}}-{{env}}/terraform-state-lock-table-name'
+      Type: String
+      Value: !Ref TerraformStateLockTable
+
+Outputs:
+  AppOIDCRoleArn:
+    Description: "ARN of the Application Role for GitHub Actions"
+    Value: !GetAtt AppOIDCRole.Arn
+
+  TerraformStateBucketName:
+    Description: "S3 Bucket for Terraform State"
+    Value: !Ref TerraformStateBucket
+
+  TerraformStateLockTableName:
+    Description: "DynamoDB Table for Terraform State Lock"
+    Value: !Ref TerraformStateLockTable
