@@ -1,4 +1,4 @@
-name: 'Bootstrap Application'
+name: 'Bootstrap'
 
 env:
   AWS_REGION: 'ap-southeast-2'
