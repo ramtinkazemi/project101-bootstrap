@@ -22,7 +22,7 @@ Resources:
   AppOIDCRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "{{stack}}-{{app}}-{{env}}-gha-oidc-app-role-${AWS::Region}"
+      RoleName: !Sub "{{stack}}-{{app}}-{{env}}-gha-oidc-role-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
