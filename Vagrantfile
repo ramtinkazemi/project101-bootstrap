@@ -3,8 +3,8 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/app"
   config.ssh.forward_agent = true
   config.vm.provision "shell", inline: <<-SHELL
-      . .env.local
-      
+      . .env.vagrant
+        
       # Update and install dependencies
       sudo apt update
       sudo apt install -y git curl unzip apt-transport-https gnupg lsb-release software-properties-common
@@ -46,33 +46,39 @@ Vagrant.configure("2") do |config|
       echo 'alias tf=terraform' >> /home/vagrant/.bashrc
 
       # Install tflint
-      curl -o tflint.zip -SLf https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip
+      curl -o tflint.zip -SLf https://github.com/terraform-linters/tflint/releases/download/${TFLINT_VERSION}/tflint_linux_amd64.zip
       unzip tflint.zip 
       sudo mv tflint /usr/local/bin/ 
       tflint --version 
       rm tflint.zip
 
       # Install tfsec
-      curl -o tfsec -SLf https://github.com/aquasecurity/tfsec/releases/download/v${TFSEC_VERSION}/tfsec-linux-amd64
+      curl -o tfsec -SLf https://github.com/aquasecurity/tfsec/releases/download/${TFSEC_VERSION}/tfsec-linux-amd64
       chmod +x tfsec
       mv tfsec /usr/local/bin/
       tfsec --version
 
       # Install Terragrunt
-      curl -o terragrunt -SLf https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64
+      curl -o terragrunt -SLf https://github.com/gruntwork-io/terragrunt/releases/download/${TERRAGRUNT_VERSION}/terragrunt_linux_amd64
       chmod +x terragrunt
       sudo mv terragrunt /usr/local/bin/
       echo 'alias tg=terragrunt' >> /home/vagrant/.bashrc
 
+      # Docker Installation
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      sudo apt update
+      sudo apt install -y docker-ce docker-ce-cli containerd.io
+
       # Install kubectl
-      curl -o kubectl -SLf "https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+      curl -o kubectl -SLf "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
       chmod +x ./kubectl
       sudo mv ./kubectl /usr/local/bin/kubectl
       kubectl completion  >> /home/vagrant/.bashrc
       echo 'alias k=kubectl' >> /home/vagrant/.bashrc
 
       # Install Helm
-      curl -o helm.tar.gz -SLf https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz
+      curl -o helm.tar.gz -SLf https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
       tar -zxvf helm.tar.gz -C /tmp
       sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
       rm -rf helm.tar.gz 
@@ -83,8 +89,8 @@ Vagrant.configure("2") do |config|
       sudo tar -C /usr/local -xzf go.tar.gz
       echo 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
       echo 'export GOPATH=$HOME/go' >> /home/vagrant/.bashrc
-      rm go.tar.gz
-
+      rm -rf go.tar.gz
+      
       cat << 'EOF' >> /home/vagrant/.bashrc
       function git_branch {
           if git rev-parse --git-dir > /dev/null 2>&1; then
@@ -98,6 +104,7 @@ Vagrant.configure("2") do |config|
         }
         export PS1='\\[\\033[1;32m\\]\\u@\\h\\[\\033[0m\\]:\\w\$(git_branch)\\[\\033[0;37m\\] '
 EOF
+
       echo "alias gco='git checkout'" >> /home/vagrant/.bashrc
       echo "alias gcm='git commit -m'" >> /home/vagrant/.bashrc
       echo "alias gad='git add'" >> /home/vagrant/.bashrc

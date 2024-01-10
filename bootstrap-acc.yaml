@@ -1,0 +1,162 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Bootstrap template for bootstrap AWS Account
+
+Resources:
+
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: 'https://token.actions.githubusercontent.com'
+      ClientIdList:
+        - 'sts.amazonaws.com'
+      ThumbprintList:
+        - '1b511abead59c6ce207077c0bf0e0043b1382612'
+
+  BootstrapOIDCRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub gha-oidc-bootstrap-role-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: [
+                  !Sub "repo:{{github_bootstrap_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_bootstrap_repo}}:pull_request",
+                ]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+
+  BlueprintsOIDCRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub gha-oidc-blueprints-role-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: [
+                  !Sub "repo:{{github_blueprints_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_blueprints_repo}}:pull_request",
+                ]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+
+  InfraOIDCRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub gha-oidc-infra-role-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: [
+                  !Sub "repo:{{github_infra_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_infra_repo}}:pull_request",
+                ]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  BootstrapLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "BootstrapLambdaPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "*"
+                Resource: "*"
+
+  BootstrapLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: "index.handler"
+      Role: !GetAtt BootstrapLambdaExecutionRole.Arn
+      Runtime: "python3.8"
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref 'AWS::AccountId'
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              logger.info(f"Event: {event}")
+              try:
+                  if event['RequestType'] == 'Create':
+                    pass
+                  elif event['RequestType'] == 'Update':
+                      pass
+
+                  elif event['RequestType'] == 'Delete':
+                      pass
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+              except Exception as e:
+                  logger.error(e)
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
+
+  BootstrapOIDCRoleArnParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/gha-oidc-bootstrap-role-arn'
+      Type: String
+      Value: !GetAtt BootstrapOIDCRole.Arn
+
+  BlueprintsOIDCRoleArnParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/gha-oidc-blueprints-role-arn'
+      Type: String
+      Value: !GetAtt BlueprintsOIDCRole.Arn
+
+  InfraOIDCRoleArnParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: '/facts/v1/gha-oidc-infra-role-arn'
+      Type: String
+      Value: !GetAtt InfraOIDCRole.Arn
+
+Outputs:
+  BootstrapOIDCRoleArn:
+    Description: "ARN of the Bootstrap Role for GitHub Actions"
+    Value: !GetAtt BootstrapOIDCRole.Arn
+
+  BlueprintsOIDCRoleArn:
+    Description: "ARN of the Blueprints Role for GitHub Actions"
+    Value: !GetAtt BlueprintsOIDCRole.Arn
+
+  InfraOIDCRoleArn:
+    Description: "ARN of the Infra Role for GitHub Actions"
+    Value: !GetAtt InfraOIDCRole.Arn

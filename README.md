@@ -4,11 +4,14 @@ This project sets up a foundational infrastructure for Terraform state managemen
 
 ## Components
 
-- **bootstrap.yaml**: A CloudFormation template to create an S3 bucket for Terraform's remote state, a DynamoDB table for state locking, and two CodeCommit repositories for Terraform modules and Terragrunt configurations.
+- **bootstrap-acc.yaml**: A CloudFormation template to OIDC IAM roles for integrarting AWS and Github for bootstrap, blueprints and infra repos.
 
-- **bin/bootstrap.sh**: A script to deploy or update the CloudFormation stack in the AWS Sydney region (`ap-southeast-2`).
+- **bootstrap-acc.vars**: Parameters used to render bootstrap-acc.yaml
 
-- **Vagrantfile**: A virtaulbox VM managed by Vagrant for the dev toolbox.
+- **bootstrap-app.yaml**: A CloudFormation template to create an S3 bucket for Terraform's remote state, a DynamoDB table for state locking, and three OIDC IAM role for integrarting AWS and Github fro app repo. 
+
+- **bootstrap-app.vars**: Parameters used to render bootstrap-app.yaml
+
 
 ## Prerequisites
 
@@ -19,32 +22,58 @@ This project sets up a foundational infrastructure for Terraform state managemen
 - (Optional) Virtualbox: (v>=5.0)
 ## Usage
 
-### Deploying terraform CloudFromation Stack
+## Bootstrapping
 
-This CloudFormation template is designed to establish essential infrastructure components for managing Terraform states and integrating with GitHub Actions in AWS. Key elements include:
+CloudFormation templates are designed to establish essential infrastructure components for managing Terraform states and integrating with GitHub Actions in AWS. Key elements include:
 
 - GitHub OIDC Provider: Sets up an IAM OIDC provider for GitHub Actions.
-- S3 Bucket & DynamoDB Table: Creates resources for storing Terraform states and handling state locking.
 - IAM Roles: Establishes roles for GitHub Actions in different contexts (Blueprints, Infra, App) with appropriate policies and permissions.
 - Lambda Function & Role: Deploys a Lambda function with an execution role to perform initial bootstrap tasks.
 - SSM Parameters: Stores important ARNs and resource names as SSM parameters for easy retrieval.
+- S3 Bucket & DynamoDB Table: Creates resources for storing Terraform states and handling state locking.
 - Outputs: Provides ARNs for created IAM roles and names of S3 bucket and DynamoDB table.
 
-1. Make sure terminal has AWS credentials set.
-3. (Optional) Spin up and ssh into the vagrant box:
+### Bootstrapping AWS Account
+
+1. Make sure your terminal session has AWS credentials set. Use STS termprary credentials provide by AWS SSO for this purpose if can. You may use the following command to check your AWS identity:
+   ```bash
+   make aws-check
+   ```
+2. Visit **.env.local** and make necessary adjustments.
+3. Visit **.bootstrap-acc.var** and make necessary adjustments.
+4. (Optional) Spin up and ssh into the vagrant box:
    ```bash
     vagrant up
     vagrant ssh
    ```
-4. Execute the script:
+5. Execute the script:
    ```bash
-   make bootstrap
+   make bootstrap-acc
+   ```
+### Bootstrapping Applications
+This can be done either via the provided Github Workflow or manullay as follows:
+
+1. Make sure your terminal session has AWS credentials set. Use STS termprary credentials provide by AWS SSO for this purpose if can. You may use the following command to check your AWS identity:
+   ```bash
+   make aws-check
+   ```
+2. Visit **.env.local** and make necessary adjustments.
+3. Visit **.bootstrap-acc.var** and make necessary adjustments.
+4. (Optional) Spin up and ssh into the vagrant box:
+   ```bash
+    vagrant up
+    vagrant ssh
+   ```
+5. Execute the script:
+   ```bash
+   make bootstrap-app
    ```
 
 # Troubleshooting
 In cases where the Cloudformation stack (bootstrap) fails, use the follwoing command to get insights.
    ```bash
-    aws cloudformation describe-stack-events --stack-name bootstrap --region ap-southeast-2 --query 'StackEvents[0].ResourceStatusReason' --output text
+    aws cloudformation describe-stack-events --stack-name $cfn_stack_name --region ap-southeast-2 --query 'StackEvents[0].ResourceStatusReason' --output text
    ```
+where **cfn_stack_name** is **bootstrap-account** or **bootdstrap-<stack>-<app><env>** for account and app respectively.
 
 In this case, the stack needs to be deleted manually before trying again.
