@@ -33,7 +33,7 @@ bootstrap-acc: check-aws
 	@CFN_STACK_NAME=bootstrap-account ./bin/deploy-cfn-stack.sh bootstrap-acc-rendered.yaml
 
 bootstrap-app: check-aws
-	@echo "Bootstrapping App for Terraform and Github OIDC..."
+	@echo "Bootstrapping app for Terraform and Github OIDC..."
 	@echo STACK=$(STACK)
 	@echo APP=$(APP)
 	@echo ENV=$(ENV)
@@ -50,3 +50,22 @@ bootstrap-app: check-aws
 	fi
 	@./bin/render.sh bootstrap-app.yaml bootstrap-app.vars > bootstrap-app-rendered.yaml
 	@CFN_STACK_NAME=bootstrap-$(STACK)-$(APP)-${ENV} ./bin/deploy-cfn-stack.sh bootstrap-app-rendered.yaml
+
+
+bootstrap-com: check-aws
+	@echo "Bootstrapping component for Terraform and Github OIDC..."
+	@echo STACK=$(STACK)
+	@echo COM=$(COM)
+	@echo ENV=$(ENV)
+	@if [ "$(GITHUB_ACTIONS)" = "true" ]; then \
+		echo "Running in Github Actions, skipping confirmation."; \
+	else \
+		echo "\033[1;31mProceed? [y|N] \033[0m" | tr -d '\n'; \
+		read PROCEED; \
+		case "$$PROCEED" in \
+			[Yy]* ) ;; \
+			* ) echo "Exiting..."; exit 1 ;; \
+		esac \
+	fi
+	@./bin/render.sh bootstrap-com.yaml bootstrap-com.vars > bootstrap-com-rendered.yaml
+	@CFN_STACK_NAME=bootstrap-$(STACK)-$(COM)-${ENV} ./bin/deploy-cfn-stack.sh bootstrap-com-rendered.yaml

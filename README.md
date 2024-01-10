@@ -58,7 +58,7 @@ This can be done either via the provided Github Workflow or manullay as follows:
    make aws-check
    ```
 2. Visit **.env.local** and make necessary adjustments.
-3. Visit **.bootstrap-acc.var** and make necessary adjustments.
+3. Visit **.bootstrap-app.var** and make necessary adjustments.
 4. (Optional) Spin up and ssh into the vagrant box:
    ```bash
     vagrant up
@@ -69,11 +69,30 @@ This can be done either via the provided Github Workflow or manullay as follows:
    make bootstrap-app
    ```
 
+### Bootstrapping Components (Terraform Blueprint Instances)
+This can be done either via the provided Github Workflow or manullay as follows:
+
+1. Make sure your terminal session has AWS credentials set. Use STS termprary credentials provide by AWS SSO for this purpose if can. You may use the following command to check your AWS identity:
+   ```bash
+   make aws-check
+   ```
+2. Visit **.env.local** and make necessary adjustments.
+3. Visit **.bootstrap-com.var** and make necessary adjustments.
+4. (Optional) Spin up and ssh into the vagrant box:
+   ```bash
+    vagrant up
+    vagrant ssh
+   ```
+5. Execute the script:
+   ```bash
+   make bootstrap-com
+   ```
+
 # Troubleshooting
 In cases where the Cloudformation stack (bootstrap) fails, use the follwoing command to get insights.
    ```bash
     aws cloudformation describe-stack-events --stack-name $cfn_stack_name --region ap-southeast-2 --query 'StackEvents[0].ResourceStatusReason' --output text
    ```
-where **cfn_stack_name** is **bootstrap-account** or **bootdstrap-<stack>-<app><env>** for account and app respectively.
+where **cfn_stack_name** is **bootstrap-account** or **bootdstrap-<stack>-<app|com><env>** for account and app respectively.
 
 In this case, the stack needs to be deleted manually before trying again.
