@@ -1,10 +1,21 @@
 #!/bin/bash
 # set -e -o pipefail
 
-bin_path=$(realpath $(dirname $0))
-root_path=$(realpath $bin_path/..)
+function print_usage(){
+    echo -e "USAGE: ${0##*/} <template-file>"
+}
 
-. .env.local
+case $# in
+    1)
+      template=$1
+      ;;
+    *)
+      echo "ERROR: Inavlid number of arguments."
+      print_usage
+      exit 1
+      ;;      
+esac
+
 
 # Check if AWS CLI is installed
 if ! [ -x "$(command -v aws)" ]; then
@@ -15,7 +26,7 @@ fi
 # Function to deploy or update CloudFormation stack
 deploy_stack() {
     aws cloudformation deploy \
-        --template-file $TEMPLATE_FILE \
+        --template-file $template \
         --stack-name $STACK_NAME \
         --region $AWS_REGION \
         --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \

@@ -1,18 +1,18 @@
+include .env
+export
+
 .PHONY: check-aws bootstrap
 
-# Export TG_CONFIG_PATH so it's available to the shell commands
-export TG_CONFIG_PATH
-
-all: check-aws init validate plan apply destroy
+all: check-aws bootstrap
 
 check-aws:
-	@echo "Checking AWS credentials..."
-	@AWS_IDENTITY=$$(aws sts get-caller-identity --output text --query 'Account'); \
-	AWS_USER=$$(aws sts get-caller-identity --output text --query 'Arn'); \
+	@echo "Checking AWS credentials..."; \
+	AWS_IDENTITY=$$(aws sts get-caller-identity --output text --query 'Account'); \
 	if [ -z "$$AWS_IDENTITY" ]; then \
 		echo "Failed to retrieve AWS identity."; \
 		exit 1; \
 	else \
+		AWS_USER=$$(aws sts get-caller-identity --output text --query 'Arn'); \
 		echo "AWS User: $$AWS_USER"; \
 	fi
 
@@ -25,5 +25,5 @@ bootstrap: check-aws
 		* ) echo "Exiting..."; exit 1;; \
 	esac
 	@./bin/render.sh bootstrap.yaml bootstrap.vars > bootstrap-rendered.yaml
-	@./bin/bootstrap.sh
+	@./bin/bootstrap.sh bootstrap-rendered.yaml
 

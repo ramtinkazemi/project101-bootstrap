@@ -4,11 +4,9 @@ This project sets up a foundational infrastructure for Terraform state managemen
 
 ## Components
 
-- **bootstrap.yaml**: A CloudFormation template to create an S3 bucket for Terraform's remote state, a DynamoDB table for state locking, and two CodeCommit repositories for Terraform modules and Terragrunt configurations.
+- **bootstrap.yaml**: A CloudFormation template to create an S3 bucket for Terraform's remote state, a DynamoDB table for state locking, and three OIDC IAM roles for integrarting AWS and Github. 
 
-- **bin/bootstrap.sh**: A script to deploy or update the CloudFormation stack in the AWS Sydney region (`ap-southeast-2`).
-
-- **Vagrantfile**: A virtaulbox VM managed by Vagrant for the dev toolbox.
+- **bootstrap.vars**: Parameters used to render bootstrap.yaml
 
 ## Prerequisites
 
@@ -30,7 +28,12 @@ This CloudFormation template is designed to establish essential infrastructure c
 - SSM Parameters: Stores important ARNs and resource names as SSM parameters for easy retrieval.
 - Outputs: Provides ARNs for created IAM roles and names of S3 bucket and DynamoDB table.
 
-1. Make sure terminal has AWS credentials set.
+1. Visit **.env** and make necessary adjustments.
+2. Visit **.bootstrap.var** and make necessary adjustments.
+3. Make sure your terminal session has AWS credentials set. Use STS termprary credentials provide by AWS SSO for this purpose if can. You may use the following command to check your AWS identity:
+   ```bash
+   make aws-check
+   ```
 3. (Optional) Spin up and ssh into the vagrant box:
    ```bash
     vagrant up

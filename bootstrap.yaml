@@ -1,22 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Bootstrap template for bootstrap AWS Account
 
-Parameters:
-  GitHubBlueprintsRepo:
-    Type: String
-    Default: '{{GITHUB_BLUEPRINTS_REPO}}'
-    Description: GitHub repository for OIDC integration with blueprint repo
-
-  GitHubInfraRepo:
-    Type: String
-    Default: '{{GITHUB_INFRA_REPO}}'
-    Description: GitHub repository for OIDC integration with infrastructure repo
-
-  GitHubAppRepo:
-    Type: String
-    Default: '{{GITHUB_APP_REPO}}'
-    Description: GitHub repository for OIDC integration with application repo
-
 Resources:
 
   GitHubOIDCProvider:
@@ -60,7 +44,7 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
-  BlueprintRole:
+  BlueprintsRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub github-action-blueprints-role-${AWS::Region}
@@ -75,8 +59,8 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
                 token.actions.githubusercontent.com:sub: [
-                  !Sub "repo:${GitHubBlueprintsRepo}:ref:refs/heads/main",
-                  !Sub "repo:${GitHubBlueprintsRepo}:pull_request",
+                  !Sub "repo:{{github_blueprints_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_blueprints_repo}}:pull_request",
                 ]
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/ReadOnlyAccess
@@ -96,8 +80,8 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
                 token.actions.githubusercontent.com:sub: [
-                  !Sub "repo:${GitHubInfraRepo}:ref:refs/heads/main",
-                  !Sub "repo:${GitHubInfraRepo}:pull_request",
+                  !Sub "repo:{{github_infra_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_infra_repo}}:pull_request",
                 ]
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
@@ -117,8 +101,8 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
                 token.actions.githubusercontent.com:sub: [
-                  !Sub "repo:${GitHubAppRepo}:ref:refs/heads/main",
-                  !Sub "repo:${GitHubAppRepo}:pull_request",
+                  !Sub "repo:{{github_app_repo}}:ref:refs/heads/main",
+                  !Sub "repo:{{github_app_repo}}:pull_request",
                 ]
       Policies:
         - PolicyName: EKSFullAccessPolicy
@@ -192,12 +176,12 @@ Resources:
                   logger.error(e)
                   cfnresponse.send(event, context, cfnresponse.FAILED, {})
 
-  BlueprintRoleArnParameter:
+  BlueprintsRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/blueprint-role-arn'
+      Name: '/facts/v1/blueprints-role-arn'
       Type: String
-      Value: !GetAtt BlueprintRole.Arn
+      Value: !GetAtt BlueprintsRole.Arn
 
   InfraRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
@@ -228,9 +212,9 @@ Resources:
       Value: !Ref TerraformStateLockTable
 
 Outputs:
-  BlueprintRoleArn:
-    Description: "ARN of the Blueprint Role for GitHub Actions"
-    Value: !GetAtt BlueprintRole.Arn
+  BlueprintsRoleArn:
+    Description: "ARN of the Blueprints Role for GitHub Actions"
+    Value: !GetAtt BlueprintsRole.Arn
 
   InfraRoleArn:
     Description: "ARN of the Infra Role for GitHub Actions"
