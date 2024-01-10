@@ -5,11 +5,10 @@ env:
   AWS_ACCOUNT_ID: '211125726495'
   AWS_OIDC_ROLE: 'arn:aws:iam::211125726495:role/gha-oidc-bootstrap-role-ap-southeast-2'
 
-### add these to workflow vars, not to be managed by gitops
-  # STACK: 'proj101'
-  # APP: 'webapp'
-  # ENV: 'dev'
-  # REPO: '"ramtinkazemi/project101-app'
+  STACK: 'proj101'
+  APP: 'app'
+  ENV: 'dev'
+  REPO: '"ramtinkazemi/project101-app'
 
 on:
   workflow_dispatch:

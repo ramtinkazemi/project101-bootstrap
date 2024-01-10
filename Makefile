@@ -55,7 +55,7 @@ bootstrap-app: check-aws
 bootstrap-com: check-aws
 	@echo "Bootstrapping component for Terraform and Github OIDC..."
 	@echo STACK=$(STACK)
-	@echo COM=$(COM)
+	@echo COMPONENT=$(COMPONENT)
 	@echo ENV=$(ENV)
 	@if [ "$(GITHUB_ACTIONS)" = "true" ]; then \
 		echo "Running in Github Actions, skipping confirmation."; \
@@ -68,4 +68,4 @@ bootstrap-com: check-aws
 		esac \
 	fi
 	@./bin/render.sh bootstrap-com.yaml bootstrap-com.vars > bootstrap-com-rendered.yaml
-	@CFN_STACK_NAME=bootstrap-$(STACK)-$(COM)-${ENV} ./bin/deploy-cfn-stack.sh bootstrap-com-rendered.yaml
+	@CFN_STACK_NAME=bootstrap-$(STACK)-$(COMPONENT)-${ENV} ./bin/deploy-cfn-stack.sh bootstrap-com-rendered.yaml
