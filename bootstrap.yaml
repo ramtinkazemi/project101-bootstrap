@@ -15,7 +15,7 @@ Resources:
   TerraformStateBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub terraform-state-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub "terraform-state-${AWS::AccountId}-${AWS::Region}"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -31,7 +31,7 @@ Resources:
   TerraformStateLockTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub terraform-lock-${AWS::AccountId}-${AWS::Region}
+      TableName: !Sub "terraform-lock-${AWS::AccountId}-${AWS::Region}"
       AttributeDefinitions:
         - AttributeName: LockID
           AttributeType: S
@@ -47,7 +47,7 @@ Resources:
   BlueprintsRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub github-action-blueprints-role-${AWS::Region}
+      RoleName: !Sub gha-oidc-blueprints-role-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -68,7 +68,7 @@ Resources:
   InfraRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub github-action-infra-role-${AWS::Region}
+      RoleName: !Sub gha-oidc-infra-role-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -89,7 +89,7 @@ Resources:
   AppRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub github-action-app-role-${AWS::Region}
+      RoleName: !Sub gha-oidc-app-role-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -179,21 +179,21 @@ Resources:
   BlueprintsRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/blueprints-role-arn'
+      Name: '/facts/v1/gha-oidc-blueprints-role-arn'
       Type: String
       Value: !GetAtt BlueprintsRole.Arn
 
   InfraRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/infra-role-arn'
+      Name: '/facts/v1/gha-oidc-infra-role-arn'
       Type: String
       Value: !GetAtt InfraRole.Arn
 
   AppRoleArnParameter:
     Type: 'AWS::SSM::Parameter'
     Properties:
-      Name: '/facts/v1/app-role-arn'
+      Name: '/facts/v1/gha-oidc-app-role-arn'
       Type: String
       Value: !GetAtt AppRole.Arn
 

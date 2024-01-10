@@ -1,18 +1,15 @@
-include .env
+include .env.local
 export
 
 .PHONY: check-aws bootstrap
 
-all: check-aws bootstrap
-
 check-aws:
 	@echo "Checking AWS credentials..."; \
-	AWS_IDENTITY=$$(aws sts get-caller-identity --output text --query 'Account'); \
-	if [ -z "$$AWS_IDENTITY" ]; then \
+	AWS_USER=$$(aws sts get-caller-identity --output text --query 'Arn'); \
+	if [ -z "$$AWS_USER" ]; then \
 		echo "Failed to retrieve AWS identity."; \
 		exit 1; \
 	else \
-		AWS_USER=$$(aws sts get-caller-identity --output text --query 'Arn'); \
 		echo "AWS User: $$AWS_USER"; \
 	fi
 
