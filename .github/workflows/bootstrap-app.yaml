@@ -3,7 +3,7 @@ name: 'Bootstrap Application'
 env:
   AWS_REGION: 'ap-southeast-2'
   AWS_ACCOUNT_ID: '211125726495'
-  AWS_OIDC_ROLE: 'arn:aws:iam::211125726495:role/gha-bootstrap-role-ap-southeast-2'
+  AWS_OIDC_ROLE: 'arn:aws:iam::211125726495:role/gha-oidc-bootstrap-role-ap-southeast-2'
 
   STACK: 'project101'
   APP: 'webapp'
