@@ -48,6 +48,7 @@ Resources:
                   - "ec2:Describe*"
                   - "ec2:ModifyInstanceAttribute"
                   - "ec2:RebootInstances"
+                  - "ecr:*"
                 Resource: "*"
         - PolicyName: S3AccessPolicy
           PolicyDocument:
