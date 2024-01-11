@@ -6,7 +6,7 @@ Resources:
   TerraformStateLockTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "{{component}}-terraform-lock-${AWS::AccountId}-${AWS::Region}"
+      TableName: !Sub "{{component}}-terraform-lock"
       AttributeDefinitions:
         - AttributeName: LockID
           AttributeType: S
